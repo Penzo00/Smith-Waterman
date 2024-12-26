@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
+#include "smith-waterman.h"
 
 #define S_LEN 512
 #define N 1000
@@ -42,7 +43,7 @@ void backtrace(char *simple_rev_cigar, char **dir_mat, int i, int j, int max_cig
 	}
 }
 
-int main(int argc, char *argv[])
+int main2(int argc, char *argv[])
 {
 	srand(time(NULL));
 
