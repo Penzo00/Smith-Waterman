@@ -1,74 +1,33 @@
-# CUDA and cuDNN-Based Sequence Processing
+# CUDA-Based Sequence Processing
 
-Parallelized implementation of the Smith-Waterman algorithm for PiA GPU101 @PoliMi on how to use CUDA and cuDNN to process nucleotide sequences. The program generates random sequences, applies a convolution operation using cuDNN, and measures the GPU computation time.
+Parallelized implementation of the Smith-Waterman algorithm for PiA GPU101 @PoliMi.
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Prerequisites](#prerequisites)
 - [Features](#features)
 - [How It Works](#how-it-works)
 - [Build and Run Instructions](#build-and-run-instructions)
-- [Code Breakdown](#code-breakdown)
-- [Performance](#performance)
-- [License](#license)
-
 ---
-
-## Overview
-
-This program:
-- Generates random nucleotide sequences (`A`, `C`, `G`, `T`, and `N`) as query and reference data.
-- Leverages CUDA and cuDNN for high-performance sequence processing.
-- Uses convolution operations to simulate sequence alignment tasks.
-- Measures GPU execution time for performance evaluation.
-
-## Prerequisites
-
-To build and run the program, ensure you have:
-1. **NVIDIA GPU** with CUDA Compute Capability 3.0 or higher.
-2. **CUDA Toolkit** installed ([Download CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)).
-3. **cuDNN Library** installed ([Download cuDNN](https://developer.nvidia.com/cudnn)).
-4. **CMake** version 3.28 or higher installed ([Download CMake](https://cmake.org/download/)).
 
 ## Features
 
 - Parallelized Score and Direction Matrix Computation;
 - GPU Backtrace Implementation;
-- CPU-GPU Comparison.
-
-Includes a CPU implementation for performance benchmarking.
-Reports the speedup achieved by the GPU implementation.
-Pseudo-Random Sequence Generation:
-
-Generates random DNA sequences using the Collatz-Weyl Generator (CWG128) for reproducibility.
+- CPU-GPU Comparison;
+- Pseudo-Random Sequence Generation using the Collatz-Weyl Generator (CWG128).
 
 ---
 
 ## How It Works
 
-1. **Memory Allocation:**
-   - Allocates pinned host memory for sequences and results.
-   - Allocates GPU memory for processing.
+1. **Sequence Generation:**
+   - Sequences are randomly generated using the Collatz-Weyl Generator, producing nucleotide sequences of given length (S_LEN) for alignment.
 
-2. **Sequence Initialization:**
-   - Fills the query and reference sequences with random nucleotide characters.
+2. **Parallelized Computation:**
+   - The CUDA kernel sw_parallelized computes the score matrix, direction matrix, and performs the traceback. Each CUDA block handles one sequence pair.
 
-3. **cuDNN Tensor Setup:**
-   - Configures tensor descriptors for query, reference, and result data.
-   - Sets up convolution and filter descriptors.
-
-4. **Convolution Execution:**
-   - Selects the optimal convolution algorithm using `cudnnFindConvolutionForwardAlgorithm`.
-   - Allocates workspace for the algorithm.
-   - Performs the convolution operation on the GPU.
-
-5. **Performance Timing:**
-   - Measures GPU execution time using high-precision timing.
-
-6. **Cleanup:**
-   - Frees all allocated resources, including GPU memory, pinned memory, and cuDNN descriptors.
-
+3. **CPU Baseline:**
+   - The sw_serialized function implements a single-threaded CPU version of Smith-Waterman for comparison.
 ---
 
 ## Build and Run Instructions
@@ -88,63 +47,13 @@ Generates random DNA sequences using the Collatz-Weyl Generator (CWG128) for rep
    ```
 
 3. **Build the Program:**
-   Compile the program using `make`:
+4. Use `nvcc` to compile the CUDA code:
    ```bash
-   make
+   nvcc -o sw_parallel_final_true sw_parallel_final_true.cu -O3
    ```
 
-4. **Run the Executable:**
+5. **Run the Executable. Optionally, pass a seed for the Collatz-Weyl Generator:**
    ```bash
-   ./GPU101
+   ./sw_parallel_final_true [seed]
    ```
-
-5. **Output Example:**
-   ```plaintext
-   Execution Time: 0.0032457340 seconds
-   ```
-
 ---
-
-## Code Breakdown
-
-### Constants
-
-- `S_LEN` (512): Length of each nucleotide sequence.
-- `N` (1000): Number of sequences processed in parallel.
-
-### Functions
-
-- `get_time()`: Returns the current time with microsecond precision for performance measurement.
-
-### Memory Allocation
-
-- **Pinned Host Memory:** Allocated using `cudaMallocHost` for fast host-to-device transfers.
-- **Device Memory:** Allocated using `cudaMalloc`.
-
-### cuDNN Setup
-
-- Tensor descriptors are configured as 4D arrays for input, reference, and results.
-- Convolution and filter descriptors are set up for cross-correlation operations.
-
-### Execution Flow
-
-- **Data Transfer:** Copies input data to the GPU asynchronously using `cudaMemcpyAsync`.
-- **Algorithm Selection:** Optimizes the convolution operation with `cudnnFindConvolutionForwardAlgorithm`.
-- **Convolution:** Executes the forward pass using `cudnnConvolutionForward`.
-
-### Cleanup
-
-- Frees all resources, ensuring no memory leaks.
-
----
-
-## Performance
-
-- The program leverages pinned memory and asynchronous data transfers for optimal performance.
-- Timing precision ensures accurate measurement of GPU processing time.
-
----
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
