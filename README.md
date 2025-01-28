@@ -33,10 +33,15 @@ To build and run the program, ensure you have:
 
 ## Features
 
-- **Random Sequence Generation:** Uses a simple nucleotide alphabet for random data creation.
-- **Pinned Memory Allocation:** Allocates page-locked memory for efficient GPU-host data transfers.
-- **cuDNN Convolution Operations:** Employs cuDNN for high-performance convolution.
-- **Performance Timing:** Measures the GPU execution time with microsecond precision.
+- Parallelized Score and Direction Matrix Computation;
+- GPU Backtrace Implementation;
+- CPU-GPU Comparison.
+
+Includes a CPU implementation for performance benchmarking.
+Reports the speedup achieved by the GPU implementation.
+Pseudo-Random Sequence Generation:
+
+Generates random DNA sequences using the Collatz-Weyl Generator (CWG128) for reproducibility.
 
 ---
 
