@@ -38,21 +38,13 @@ Parallelized implementation of the Smith-Waterman algorithm for PiA GPU101 @Poli
    cd Smith-Waterman
    ```
 
-2. **Configure the Build System with CMake:**
-   Use the provided `CMakeLists.txt` file to configure the project. Run the following commands:
-   ```bash
-   mkdir build
-   cd build
-   cmake ..
-   ```
-
-3. **Build the Program:**
-4. Use `nvcc` to compile the CUDA code:
+2. **Build the Program:**
+   Use `nvcc` to compile the CUDA code:
    ```bash
    nvcc -o sw_parallel_final_true sw_parallel_final_true.cu -O3
    ```
-
-5. **Run the Executable. Optionally, pass a seed for the Collatz-Weyl Generator:**
+   
+3. **Run the Executable. Optionally, pass a seed for the Collatz-Weyl Generator:**
    ```bash
    ./sw_parallel_final_true [seed]
    ```
