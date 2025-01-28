@@ -108,62 +108,62 @@
 	\end{itemize}
 	In our case, we had $N=1000$ sequences of length $S\_LEN=512$ consisting in $5$ nucleotides randomly chosen. At the end we have then two matrices of dimension $S\_LEN+1\times S\_LEN+1$.\\
 	Of course, each step can be parallelized in harder or easier manners. Due to difficulties found in the parallelized search of the maximum, because we stored solely the maximum value per each block, only the traceback and the construction of score and direction matrices were done.
-
-    \section{The Reason Why of This Work}
-    Of course, the time dedicate in this PiA was to try to achieve the following:
-    \begin{itemize}
-    	\item Start to see and use some C/C++ code in order not to be scared of the course \cite{polimi_data_mining}, because due to bachelor in material science and nanotechnology, I had to start programming first by myself and then thanks to the course \cite{polimi_machine_learning};
-    	
-    	\item See how parallelization is done, exploiting the ways to (re-)model an algorithm;
-    	
-    	\item Due to syntax programming difficulties, use AI as ChatGPT, Gemini and Copilot to be able to write something working;
-    	
-    	\item Understand more if I like programming or not;
-    	
-    	\item Use the \textbf{Collatz-Weyl Generators}\cite{działa2024collatzweylgeneratorshighquality} to create the random sequences.
-    \end{itemize}
-    
-    \section{Little Changes of the Original Code}
-    The given C/C++ code was modified in order to generate the sequences through Collatz-Weyl Generators. Moreover, using as IDE CLion, the suggestions were taken into account. Nevertheless, because of the O3 optimization level, at the level of the machine almost nothing changes. Moreover, the function used to get time was reformulated in order to use a high resolution clock. Obviously, this does not affect the performance nor the effective precision due to the fact that \textit{cout} stops at the sixth significant digit by default.\\
-    The seed was fixed in order to make the result be reproducible, in terms of created sequences.
-    
-    \section{Some Words about GPUs and CUDA}
-    Thanks to their architecture, GPUs can offer w.r.t. CPUs\cite{gpu101_lecture1}:
-    \begin{itemize}
-    	\item Massive parallelism;
-    	\item Higher throughput;
-    	\item Reduced computation time;
-    	\item Scalability and flexibility;
-    	\item CUDA and ecosystem support.
-    \end{itemize}
-    CUDA organizes parallel computations in a hierarchical structure to manage and scale parallelism efficiently. The smallest unit of parallel execution in CUDA is a \textbf{thread}. Threads are grouped into \textbf{thread blocks}. All threads in a block can communicate and synchronize on tasks. Threads in a block execute 
-    concurrently on a SM. When a CUDA kernel is launched, threads within each thread block are organized into groups of 32 threads called \textbf{warps}. A warp always contains 32 threads, regardless of the GPU architecture. All threads in a warp execute the same instruction at the same time (SIMT paradigm), but each thread operates on its own data 
-    element. A collection of blocks forms a \textbf{grid}. Blocks in the grid are independent of each other\cite{gpu101_lecture1}.
-    \begin{figure}[htbp]
-    	\centering
-    	\includegraphics[width=\linewidth]{Immagine 2025-01-27 220907.png}
-    	\includegraphics[width=0.7\linewidth]{Immagine 2025-01-28 093207.png}
-    	\caption{Overview of the architectures we have. \textit{Host} is CPU-side, while \textit{device} is GPU-side. The accesses in the different memories play a key role to reach high performances, e.g., exploiting \textbf{coalesced access}. \cite{gpu101_lecture1}.}
-    \end{figure}
-    Each block is assigned to a single streaming multiprocessor (SM), i.e., computational units. SMs have CUDA cores, tensor cores, L1 cache, and registers. The latters are the fastest form of memory available to each SM. L2 cache is used as an intermediate storage layer between device memory and the SMs\cite{gpu101_lecture1}.\\
-    The nearer the memory, the faster the process, and the same is with a better exploitation of the multiple of 2 (or 32) in the utilization of the resources.
-    
-    \section{Modus Operandi}
-    We can see in the algorithm in \ref{al} that an element in position \textit{i,j} in the scoring matrix does not depend on the element in \textit{i-1,j+1}, i.e., the right-up score, so that we can make full use of the fact that if the right-up element of the score matrix exists, then we have all the elements to compute the final result in the cell \textit{i,j}. This method is a sort of parabola in terms of number of not idle threads, with only a single operative thread in the first and last computation of the score matrix, while a maximum of $S_LEN$ when computing the last element of the first row.\\
-    Because of certain idle threads, the block size is of course $N$, i.e., the total number of strings, having $S_LEN$ threads for each block.\\
-    Before starting the computation, the kernel uses shared memory to store the block-level maximum score and its corresponding indices. The first row and column of the score and direction matrices are initialized to zero using coalesced memory access, i.e., each thread initializes multiple matrix elements in the same row or column by incrementing by the dimension of the block (along \textit{x}).\\
-    The main computation follows a diagonal traversal of the scoring matrix, and after the function \textit{dir\_score}, the maximum score and its indices are updated atomically by threads. Finally, the block-level maximum score and indices are written to global memory.\\
-    After this, backtracking is performed to reconstruct the alignment path in such a way that starting from the maximum score position \((i, j)\), threads independently traverse the direction matrix.\\
-    The output of the kernel provides the highest alignment score for each pair and the position where the alignment ends. For the global maximum, it was relied on a for cycle on the host, having an array of only $N$ element, saving then the index of the string that has at the end the most similar sequence.\\
-    For a fair comparison, the time on the GPU version is not entirely on the GPU, but it takes account also on the memory transfers and on this final iteration for the global maximum across all the highest value in each block.
-    
+	
+	\section{The Reason Why of This Work}
+	Of course, the time dedicate in this PiA was to try to achieve the following:
+	\begin{itemize}
+		\item Start to see and use some C/C++ code in order not to be scared of the course \cite{polimi_data_mining}, because due to bachelor in material science and nanotechnology, I had to start programming first by myself and then thanks to the course \cite{polimi_machine_learning};
+		
+		\item See how parallelization is done, exploiting the ways to (re-)model an algorithm;
+		
+		\item Due to syntax programming difficulties, use AI as ChatGPT, Gemini and Copilot to be able to write something working;
+		
+		\item Understand more if I like programming or not;
+		
+		\item Use the \textbf{Collatz-Weyl Generators}\cite{działa2024collatzweylgeneratorshighquality} to create the random sequences.
+	\end{itemize}
+	
+	\section{Little Changes of the Original Code}
+	The given C/C++ code was modified in order to generate the sequences through Collatz-Weyl Generators. Moreover, using as IDE CLion, the suggestions were taken into account. Nevertheless, because of the O3 optimization level, at the level of the machine almost nothing changes. Moreover, the function used to get time was reformulated in order to use a high resolution clock. Obviously, this does not affect the performance nor the effective precision due to the fact that \textit{cout} stops at the sixth significant digit by default.\\
+	The seed was fixed in order to make the result be reproducible, in terms of created sequences.
+	
+	\section{Some Words about GPUs and CUDA}
+	Thanks to their architecture, GPUs can offer w.r.t. CPUs\cite{gpu101_lecture1}:
+	\begin{itemize}
+		\item Massive parallelism;
+		\item Higher throughput;
+		\item Reduced computation time;
+		\item Scalability and flexibility;
+		\item CUDA and ecosystem support.
+	\end{itemize}
+	CUDA organizes parallel computations in a hierarchical structure to manage and scale parallelism efficiently. The smallest unit of parallel execution in CUDA is a \textbf{thread}. Threads are grouped into \textbf{thread blocks}. All threads in a block can communicate and synchronize on tasks. Threads in a block execute 
+	concurrently on a SM. When a CUDA kernel is launched, threads within each thread block are organized into groups of 32 threads called \textbf{warps}. A warp always contains 32 threads, regardless of the GPU architecture. All threads in a warp execute the same instruction at the same time (SIMT paradigm), but each thread operates on its own data 
+	element. A collection of blocks forms a \textbf{grid}. Blocks in the grid are independent of each other\cite{gpu101_lecture1}.
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=\linewidth]{Immagine 2025-01-27 220907.png}
+		\includegraphics[width=0.7\linewidth]{Immagine 2025-01-28 093207.png}
+		\caption{Overview of the architectures we have. \textit{Host} is CPU-side, while \textit{device} is GPU-side. The accesses in the different memories play a key role to reach high performances, e.g., exploiting \textbf{coalesced access}. \cite{gpu101_lecture1}.}
+	\end{figure}
+	Each block is assigned to a single streaming multiprocessor (SM), i.e., computational units. SMs have CUDA cores, tensor cores, L1 cache, and registers. The latters are the fastest form of memory available to each SM. L2 cache is used as an intermediate storage layer between device memory and the SMs\cite{gpu101_lecture1}.\\
+	The nearer the memory, the faster the process, and the same is with a better exploitation of the multiple of 2 (or 32) in the utilization of the resources.
+	
+	\section{Modus Operandi}
+	We can see in the algorithm in \ref{al} that an element in position \textit{i,j} in the scoring matrix does not depend on the element in \textit{i-1,j+1}, i.e., the right-up score, so that we can make full use of the fact that if the right-up element of the score matrix exists, then we have all the elements to compute the final result in the cell \textit{i,j}. This method is a sort of parabola in terms of number of not idle threads, with only a single operative thread in the first and last computation of the score matrix, while a maximum of $S_LEN$ when computing the last element of the first row.\\
+	Because of certain idle threads, the block size is of course $N$, i.e., the total number of strings, having $S_LEN$ threads for each block.\\
+	Before starting the computation, the kernel uses shared memory to store the block-level maximum score and its corresponding indices. The first row and column of the score and direction matrices are initialized to zero using coalesced memory access, i.e., each thread initializes multiple matrix elements in the same row or column by incrementing by the dimension of the block (along \textit{x}).\\
+	The main computation follows a diagonal traversal of the scoring matrix, and after the function \textit{dir\_score}, the maximum score and its indices are updated atomically by threads. Finally, the block-level maximum score and indices are written to global memory.\\
+	After this, backtracking is performed to reconstruct the alignment path in such a way that starting from the maximum score position \((i, j)\), threads independently traverse the direction matrix.\\
+	The output of the kernel provides the highest alignment score for each pair and the position where the alignment ends. For the global maximum, it was relied on a for cycle on the host, having an array of only $N$ element, saving then the index of the string that has at the end the most similar sequence.\\
+	For a fair comparison, the time on the GPU version is not entirely on the GPU, but it takes account also on the memory transfers and on this final iteration for the global maximum across all the highest value in each block.
+	
 	\section{Experimental Results and Discussion}
 	The code was executed on a NVIDIA GeForce RTX 3050 Laptop, paired with an AMD Ryzen 5600H processor, with the plug for power inserted. The maximum number of threads per block is 1024, enough for our task.\\
 	The following steps were parallelized:
 	\begin{itemize}
 		\item Score and direction matrices: each block of threads is responsible for computing the score matrix (\(sc\_mat\)) and direction matrix (\(dir\_mat\)) for a specific sequence pair. Inside a block, threads work to compute the scores for the matrix cells using the diagonal, and the computations for the next diagonal wait until the previous one is complete;
 		
-		\item Traceback: After the highest score (\(max\_score\_shared\)) and its corresponding indices (\(max\_i\_shared\), \(max\_j\_shared\)) are found for a block, each thread contributes to the traceback process, building a reversed string (\(simple\_rev\_cigar\)), which records the sequence of operations required to align the query and reference sequences.
+		\item Traceback: After the highest score (\(max\_score\_shared\)) and its corresponding indices (\(max\_i\_shared\), \(max\_j\_shared\)) are found for a block, each thread contributes to the traceback process, building a reversed string (\(simple\_rev\_cigar\)), which records the sequence of operations required to align the query and reference sequences. The resulting cigar was not compared to the CPU version, so a check is further needed. 
 	\end{itemize}
 	Unfortunately, the for cycle in the host and the copy processes from device to host and vice versa slowed the entire run, ending up in a speed up of $\approx2.5$. Nevertheless, the kernel itself compared to the serial process, sees a speed up of $\approx1000$ starting from the second run of the code.
 	
